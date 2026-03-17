@@ -1,0 +1,300 @@
+:root {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #102132;
+  background-color: #f4f8fc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  margin: 0 auto;
+  max-width: 1080px;
+  padding: 2rem 1rem 3rem;
+}
+
+.hero {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.hero h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.hero p {
+  max-width: 72ch;
+  color: #334e68;
+}
+
+.levels-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.levels-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  max-width: 420px;
+}
+
+.level-card {
+  display: grid;
+  gap: 0.65rem;
+  width: 100%;
+  text-align: left;
+  border: 1px solid #c6d4e1;
+  border-radius: 12px;
+  background: #ffffff;
+  color: inherit;
+  padding: 1rem;
+  cursor: pointer;
+}
+
+.level-card:hover {
+  border-color: #3572a5;
+}
+
+.level-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.difficulty-pill {
+  font-size: 0.75rem;
+  border-radius: 999px;
+  background: #e6eff7;
+  color: #22577a;
+  padding: 0.2rem 0.6rem;
+}
+
+.play-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.play-meta {
+  color: #486581;
+}
+
+.panel {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid #d7e2ec;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.image-placeholder {
+  min-height: 120px;
+  border: 2px dashed #bcccdc;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #627d98;
+  background: #f8fbff;
+}
+
+.shape-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.starting-shape-wrap {
+  display: grid;
+  place-items: center;
+}
+
+.action-preview-wrap {
+  display: grid;
+  place-items: center;
+}
+
+.shape-preview {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: center;
+}
+
+.shape-preview h4 {
+  font-size: 0.95rem;
+  color: #334e68;
+}
+
+.shape-canvas {
+  width: 100%;
+  max-width: 260px;
+  border-radius: 10px;
+}
+
+.shape-note {
+  border: 1px dashed #bcccdc;
+  border-radius: 10px;
+  background: #f8fbff;
+  color: #486581;
+  padding: 0.8rem;
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  text-align: center;
+}
+
+.action-links {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+}
+
+.action-link {
+  border: 0;
+  background: transparent;
+  color: #2f5f9f;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.action-link:hover {
+  color: #234a7a;
+  background: transparent;
+}
+
+.current-action {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f3f5b;
+}
+
+.guess-action-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.action-list {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.result-steps-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.result-step-card {
+  border: 1px solid #d7e2ec;
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #f9fcff;
+}
+
+.result-step-title {
+  margin-bottom: 0.5rem;
+  color: #334e68;
+  font-weight: 600;
+}
+
+.controls-row {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.guess-actions-panel {
+  background: #f7fbff;
+  border-color: #c5daee;
+}
+
+button {
+  border: 1px solid #3572a5;
+  border-radius: 8px;
+  background: #3572a5;
+  color: #fff;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #2b628e;
+}
+
+.secondary-button {
+  justify-self: start;
+  border-color: #8fa8bf;
+  background: #eef4fa;
+  color: #1f3f5b;
+}
+
+.secondary-button:hover {
+  background: #e2edf7;
+}
+
+.warning-button {
+  border-color: #e58e26;
+  background: #f6ad55;
+  color: #2d1600;
+}
+
+.warning-button:hover {
+  background: #ed9d3e;
+}
+
+.success-button {
+  border-color: #2f855a;
+  background: #38a169;
+}
+
+.success-button:hover {
+  background: #2f855a;
+}
+
+.guess-input {
+  width: 100%;
+  min-height: 100px;
+  border: 1px solid #b7c8d8;
+  border-radius: 8px;
+  padding: 0.6rem;
+  resize: vertical;
+}
+
+.result-message {
+  color: #1f3f5b;
+  font-weight: 500;
+}
