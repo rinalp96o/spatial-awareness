@@ -96,11 +96,25 @@ select {
   align-items: center;
 }
 
+.level-card__tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .difficulty-pill {
   font-size: 0.75rem;
   border-radius: 999px;
   background: #e6eff7;
   color: #22577a;
+  padding: 0.2rem 0.6rem;
+}
+
+.mode-pill {
+  font-size: 0.75rem;
+  border-radius: 999px;
+  background: #efe8ff;
+  color: #5b3ea4;
   padding: 0.2rem 0.6rem;
 }
 

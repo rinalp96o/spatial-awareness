@@ -35,6 +35,7 @@ export interface Level {
   id: number
   title: string
   difficulty: 'Easy' | 'Medium' | 'Hard'
+  mode: '2D' | '3D'
   startImage: string
   allowedActions: ActionType[]
   actionCount: number
