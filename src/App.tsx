@@ -147,10 +147,11 @@ const CUBE_VIEW_PRESETS: Array<{
   { id: 'bottom', label: 'Bottom', right: { x: 1, y: 0, z: 0 }, up: { x: 0, y: 0, z: 1 }, view: { x: 0, y: -1, z: 0 } },
 ]
 
-const CUBE_MARKER_TRIANGLE: Vector3[] = [
-  { x: -1, y: 1, z: 1 },
-  { x: -0.45, y: 1, z: 1 },
-  { x: -1, y: 0.45, z: 1 },
+const CUBE_MARKER_DIAMOND: Vector3[] = [
+  { x: -0.6667, y: 0.9, z: 1 }, // top
+  { x: -0.4333, y: 0.6667, z: 1 }, // right
+  { x: -0.6667, y: 0.4333, z: 1 }, // bottom
+  { x: -0.9, y: 0.6667, z: 1 }, // left
 ]
 
 function getBaseShapeStateForLevel(levelId: number | undefined): ShapeState {
@@ -835,7 +836,7 @@ function ShapePreview({
     const transformedVertices = CUBE_VERTICES.map((vertex) =>
       transformVector3(vertex, orientation),
     )
-    const transformedMarker = CUBE_MARKER_TRIANGLE.map((vertex) =>
+    const transformedMarker = CUBE_MARKER_DIAMOND.map((vertex) =>
       transformVector3(vertex, orientation),
     )
 
