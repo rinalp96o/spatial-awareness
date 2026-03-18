@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { LevelCard } from './components/LevelCard'
-import { ACTION_LABELS, LEVELS, getActionSequence } from './data/levels'
+import { ACTION_HELP_TEXT, ACTION_LABELS, LEVELS, getActionSequence } from './data/levels'
 import { ACTION_TYPES } from './types/game'
 import type { ActionType, Level } from './types/game'
 
 type Matrix2 = [[number, number], [number, number]]
+type Matrix3 = [[number, number, number], [number, number, number], [number, number, number]]
 
 interface Point {
   x: number
@@ -20,6 +21,9 @@ interface ShapeState {
   }
   diamond?: Point[]
   miniSquare?: Point[]
+  cubeState?: {
+    orientation: Matrix3
+  }
 }
 
 const CANVAS_SIZE = 220
@@ -73,12 +77,91 @@ const BASE_LEVEL4_STATE: ShapeState = {
   ],
 }
 
+const IDENTITY_MATRIX3: Matrix3 = [
+  [1, 0, 0],
+  [0, 1, 0],
+  [0, 0, 1],
+]
+
+const BASE_LEVEL5_STATE: ShapeState = {
+  square: BASE_SQUARE,
+  triangle: BASE_TRIANGLE,
+  cubeState: {
+    orientation: IDENTITY_MATRIX3,
+  },
+}
+
+const CUBE_VERTICES: Vector3[] = [
+  { x: -1, y: 1, z: 1 },
+  { x: 1, y: 1, z: 1 },
+  { x: 1, y: -1, z: 1 },
+  { x: -1, y: -1, z: 1 },
+  { x: -1, y: 1, z: -1 },
+  { x: 1, y: 1, z: -1 },
+  { x: 1, y: -1, z: -1 },
+  { x: -1, y: -1, z: -1 },
+]
+
+const CUBE_EDGES: Array<[number, number]> = [
+  [0, 1],
+  [1, 2],
+  [2, 3],
+  [3, 0],
+  [4, 5],
+  [5, 6],
+  [6, 7],
+  [7, 4],
+  [0, 4],
+  [1, 5],
+  [2, 6],
+  [3, 7],
+]
+
+const CUBE_FACES: Array<{ vertices: number[]; color: string; normal: Vector3 }> = [
+  { vertices: [0, 1, 2, 3], color: '#7aa2d8', normal: { x: 0, y: 0, z: 1 } }, // front
+  { vertices: [1, 5, 6, 2], color: '#5f86bf', normal: { x: 1, y: 0, z: 0 } }, // right
+  { vertices: [0, 4, 5, 1], color: '#92b5e2', normal: { x: 0, y: 1, z: 0 } }, // top
+]
+
+const CUBE_ALL_FACES: Array<{ vertices: number[]; normal: Vector3 }> = [
+  { vertices: [0, 1, 2, 3], normal: { x: 0, y: 0, z: 1 } }, // front
+  { vertices: [4, 5, 6, 7], normal: { x: 0, y: 0, z: -1 } }, // back
+  { vertices: [1, 5, 6, 2], normal: { x: 1, y: 0, z: 0 } }, // right
+  { vertices: [0, 4, 7, 3], normal: { x: -1, y: 0, z: 0 } }, // left
+  { vertices: [0, 4, 5, 1], normal: { x: 0, y: 1, z: 0 } }, // top
+  { vertices: [3, 7, 6, 2], normal: { x: 0, y: -1, z: 0 } }, // bottom
+]
+
+const CUBE_VIEW_PRESETS: Array<{
+  id: string
+  label: string
+  right: Vector3
+  up: Vector3
+  view: Vector3
+}> = [
+  { id: 'front', label: 'Front', right: { x: 1, y: 0, z: 0 }, up: { x: 0, y: 1, z: 0 }, view: { x: 0, y: 0, z: 1 } },
+  { id: 'back', label: 'Back', right: { x: -1, y: 0, z: 0 }, up: { x: 0, y: 1, z: 0 }, view: { x: 0, y: 0, z: -1 } },
+  { id: 'left', label: 'Left', right: { x: 0, y: 0, z: 1 }, up: { x: 0, y: 1, z: 0 }, view: { x: -1, y: 0, z: 0 } },
+  { id: 'right', label: 'Right', right: { x: 0, y: 0, z: -1 }, up: { x: 0, y: 1, z: 0 }, view: { x: 1, y: 0, z: 0 } },
+  { id: 'top', label: 'Top', right: { x: 1, y: 0, z: 0 }, up: { x: 0, y: 0, z: -1 }, view: { x: 0, y: 1, z: 0 } },
+  { id: 'bottom', label: 'Bottom', right: { x: 1, y: 0, z: 0 }, up: { x: 0, y: 0, z: 1 }, view: { x: 0, y: -1, z: 0 } },
+]
+
+const CUBE_MARKER_TRIANGLE: Vector3[] = [
+  { x: -1, y: 1, z: 1 },
+  { x: -0.45, y: 1, z: 1 },
+  { x: -1, y: 0.45, z: 1 },
+]
+
 function getBaseShapeStateForLevel(levelId: number | undefined): ShapeState {
   if (levelId === 3) {
     return BASE_LEVEL3_STATE
   }
   if (levelId === 4) {
     return BASE_LEVEL4_STATE
+  }
+  if (levelId === 5) {
+    return BASE_LEVEL5_STATE
   }
   return BASE_SHAPE_STATE
 }
@@ -116,6 +199,21 @@ const ACTION_MATRICES: Record<ActionType, Matrix2> = {
   [ACTION_TYPES.gravityTop]: IDENTITY_MATRIX,
   [ACTION_TYPES.gravityLeft]: IDENTITY_MATRIX,
   [ACTION_TYPES.gravityRight]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateFront90Clockwise]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateFront90AntiClockwise]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateFront180]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateLeft90Clockwise]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateLeft90AntiClockwise]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateLeft180]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateRight90Clockwise]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateRight90AntiClockwise]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateRight180]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateTop90Clockwise]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateTop90AntiClockwise]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateTop180]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateBottom90Clockwise]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateBottom90AntiClockwise]: IDENTITY_MATRIX,
+  [ACTION_TYPES.rotateBottom180]: IDENTITY_MATRIX,
 }
 
 function transformPoint(point: Point, matrix: Matrix2): Point {
@@ -132,6 +230,56 @@ function transformShape(points: Point[], matrix: Matrix2): Point[] {
 
 function pointsToSvg(points: Point[]): string {
   return points.map((point) => `${point.x},${point.y}`).join(' ')
+}
+
+interface Vector3 {
+  x: number
+  y: number
+  z: number
+}
+
+function multiplyMatrix3(a: Matrix3, b: Matrix3): Matrix3 {
+  return [
+    [
+      a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0],
+      a[0][0] * b[0][1] + a[0][1] * b[1][1] + a[0][2] * b[2][1],
+      a[0][0] * b[0][2] + a[0][1] * b[1][2] + a[0][2] * b[2][2],
+    ],
+    [
+      a[1][0] * b[0][0] + a[1][1] * b[1][0] + a[1][2] * b[2][0],
+      a[1][0] * b[0][1] + a[1][1] * b[1][1] + a[1][2] * b[2][1],
+      a[1][0] * b[0][2] + a[1][1] * b[1][2] + a[1][2] * b[2][2],
+    ],
+    [
+      a[2][0] * b[0][0] + a[2][1] * b[1][0] + a[2][2] * b[2][0],
+      a[2][0] * b[0][1] + a[2][1] * b[1][1] + a[2][2] * b[2][1],
+      a[2][0] * b[0][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2],
+    ],
+  ]
+}
+
+function transformVector3(vector: Vector3, matrix: Matrix3): Vector3 {
+  return {
+    x: matrix[0][0] * vector.x + matrix[0][1] * vector.y + matrix[0][2] * vector.z,
+    y: matrix[1][0] * vector.x + matrix[1][1] * vector.y + matrix[1][2] * vector.z,
+    z: matrix[2][0] * vector.x + matrix[2][1] * vector.y + matrix[2][2] * vector.z,
+  }
+}
+
+function rotationMatrix3(axis: 'x' | 'y' | 'z', degrees: 90 | -90 | 180): Matrix3 {
+  if (axis === 'x') {
+    if (degrees === 90) return [[1, 0, 0], [0, 0, -1], [0, 1, 0]]
+    if (degrees === -90) return [[1, 0, 0], [0, 0, 1], [0, -1, 0]]
+    return [[1, 0, 0], [0, -1, 0], [0, 0, -1]]
+  }
+  if (axis === 'y') {
+    if (degrees === 90) return [[0, 0, 1], [0, 1, 0], [-1, 0, 0]]
+    if (degrees === -90) return [[0, 0, -1], [0, 1, 0], [1, 0, 0]]
+    return [[-1, 0, 0], [0, 1, 0], [0, 0, -1]]
+  }
+  if (degrees === 90) return [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+  if (degrees === -90) return [[0, 1, 0], [-1, 0, 0], [0, 0, 1]]
+  return [[-1, 0, 0], [0, -1, 0], [0, 0, 1]]
 }
 
 function getBounds(points: Point[]) {
@@ -333,6 +481,85 @@ function moveAttachedPolygonWithGravity(
   return movedPoints
 }
 
+function isLevel5Action(action: ActionType): boolean {
+  return (
+    action === ACTION_TYPES.rotateFront90Clockwise ||
+    action === ACTION_TYPES.rotateFront90AntiClockwise ||
+    action === ACTION_TYPES.rotateFront180 ||
+    action === ACTION_TYPES.rotateLeft90Clockwise ||
+    action === ACTION_TYPES.rotateLeft90AntiClockwise ||
+    action === ACTION_TYPES.rotateLeft180 ||
+    action === ACTION_TYPES.rotateRight90Clockwise ||
+    action === ACTION_TYPES.rotateRight90AntiClockwise ||
+    action === ACTION_TYPES.rotateRight180 ||
+    action === ACTION_TYPES.rotateTop90Clockwise ||
+    action === ACTION_TYPES.rotateTop90AntiClockwise ||
+    action === ACTION_TYPES.rotateTop180 ||
+    action === ACTION_TYPES.rotateBottom90Clockwise ||
+    action === ACTION_TYPES.rotateBottom90AntiClockwise ||
+    action === ACTION_TYPES.rotateBottom180
+  )
+}
+
+function getLevel5ActionSpec(action: ActionType): { axis: 'x' | 'y' | 'z'; degrees: 90 | -90 | 180 } | null {
+  // IMPORTANT:
+  // Clockwise/anti-clockwise here are defined from the *named viewpoint* (front/left/right/top/bottom),
+  // not from global world axes. Because of this, the sign for 90-degree rotations is different for some
+  // viewpoints (left/right/top/bottom) than a naive global-axis mapping.
+  // If you change any mapping below, verify each view manually to avoid CW/CCW regressions.
+  switch (action) {
+    case ACTION_TYPES.rotateFront90Clockwise:
+      return { axis: 'z', degrees: -90 }
+    case ACTION_TYPES.rotateFront90AntiClockwise:
+      return { axis: 'z', degrees: 90 }
+    case ACTION_TYPES.rotateFront180:
+      return { axis: 'z', degrees: 180 }
+    case ACTION_TYPES.rotateLeft90Clockwise:
+      return { axis: 'x', degrees: 90 }
+    case ACTION_TYPES.rotateLeft90AntiClockwise:
+      return { axis: 'x', degrees: -90 }
+    case ACTION_TYPES.rotateLeft180:
+      return { axis: 'x', degrees: 180 }
+    case ACTION_TYPES.rotateRight90Clockwise:
+      return { axis: 'x', degrees: -90 }
+    case ACTION_TYPES.rotateRight90AntiClockwise:
+      return { axis: 'x', degrees: 90 }
+    case ACTION_TYPES.rotateRight180:
+      return { axis: 'x', degrees: 180 }
+    case ACTION_TYPES.rotateTop90Clockwise:
+      return { axis: 'y', degrees: -90 }
+    case ACTION_TYPES.rotateTop90AntiClockwise:
+      return { axis: 'y', degrees: 90 }
+    case ACTION_TYPES.rotateTop180:
+      return { axis: 'y', degrees: 180 }
+    case ACTION_TYPES.rotateBottom90Clockwise:
+      return { axis: 'y', degrees: 90 }
+    case ACTION_TYPES.rotateBottom90AntiClockwise:
+      return { axis: 'y', degrees: -90 }
+    case ACTION_TYPES.rotateBottom180:
+      return { axis: 'y', degrees: 180 }
+    default:
+      return null
+  }
+}
+
+function applyLevel5RotationAction(state: ShapeState, action: ActionType): ShapeState {
+  if (!state.cubeState) {
+    return state
+  }
+  const spec = getLevel5ActionSpec(action)
+  if (!spec) {
+    return state
+  }
+  const rotation = rotationMatrix3(spec.axis, spec.degrees)
+  return {
+    ...state,
+    cubeState: {
+      orientation: multiplyMatrix3(rotation, state.cubeState.orientation),
+    },
+  }
+}
+
 function applyGravityAction(state: ShapeState, action: ActionType): ShapeState {
   const gravityVectorByAction: Record<ActionType, { x: number; y: number } | null> = {
     [ACTION_TYPES.rotate90Clockwise]: null,
@@ -346,6 +573,21 @@ function applyGravityAction(state: ShapeState, action: ActionType): ShapeState {
     [ACTION_TYPES.gravityBottom]: { x: 0, y: 1 },
     [ACTION_TYPES.gravityLeft]: { x: -1, y: 0 },
     [ACTION_TYPES.gravityRight]: { x: 1, y: 0 },
+    [ACTION_TYPES.rotateFront90Clockwise]: null,
+    [ACTION_TYPES.rotateFront90AntiClockwise]: null,
+    [ACTION_TYPES.rotateFront180]: null,
+    [ACTION_TYPES.rotateLeft90Clockwise]: null,
+    [ACTION_TYPES.rotateLeft90AntiClockwise]: null,
+    [ACTION_TYPES.rotateLeft180]: null,
+    [ACTION_TYPES.rotateRight90Clockwise]: null,
+    [ACTION_TYPES.rotateRight90AntiClockwise]: null,
+    [ACTION_TYPES.rotateRight180]: null,
+    [ACTION_TYPES.rotateTop90Clockwise]: null,
+    [ACTION_TYPES.rotateTop90AntiClockwise]: null,
+    [ACTION_TYPES.rotateTop180]: null,
+    [ACTION_TYPES.rotateBottom90Clockwise]: null,
+    [ACTION_TYPES.rotateBottom90AntiClockwise]: null,
+    [ACTION_TYPES.rotateBottom180]: null,
   }
 
   const gravityVector = gravityVectorByAction[action]
@@ -422,6 +664,10 @@ function applyGravityAction(state: ShapeState, action: ActionType): ShapeState {
 }
 
 function applyActionToShapeState(state: ShapeState, action: ActionType): ShapeState {
+  if (state.cubeState && isLevel5Action(action)) {
+    return applyLevel5RotationAction(state, action)
+  }
+
   if (
     action === ACTION_TYPES.gravityTop ||
     action === ACTION_TYPES.gravityBottom ||
@@ -491,13 +737,21 @@ function areShapeStatesEqual(a: ShapeState, b: ShapeState): boolean {
   const miniSquaresMatch =
     (!a.miniSquare && !b.miniSquare) ||
     (!!a.miniSquare && !!b.miniSquare && pointArraysMatch(a.miniSquare, b.miniSquare))
+  const cubeMatch =
+    (!a.cubeState && !b.cubeState) ||
+    (!!a.cubeState &&
+      !!b.cubeState &&
+      a.cubeState.orientation.every((row, rowIndex) =>
+        row.every((value, colIndex) => close(value, b.cubeState!.orientation[rowIndex][colIndex])),
+      ))
 
   return (
     pointArraysMatch(a.square, b.square) &&
     pointArraysMatch(a.triangle, b.triangle) &&
     circlesMatch &&
     diamondsMatch &&
-    miniSquaresMatch
+    miniSquaresMatch &&
+    cubeMatch
   )
 }
 
@@ -576,6 +830,167 @@ function ShapePreview({
   shapeState,
   hideTitle = false,
 }: ShapePreviewProps) {
+  if (shapeState?.cubeState) {
+    const orientation = shapeState.cubeState.orientation
+    const transformedVertices = CUBE_VERTICES.map((vertex) =>
+      transformVector3(vertex, orientation),
+    )
+    const transformedMarker = CUBE_MARKER_TRIANGLE.map((vertex) =>
+      transformVector3(vertex, orientation),
+    )
+
+    const projectPoint = (vertex: Vector3): Point => {
+      const scale = 34
+      return {
+        x: CANVAS_CENTER + (vertex.x - vertex.z * 0.55) * scale,
+        y: CANVAS_CENTER + (-vertex.y - vertex.z * 0.35) * scale,
+      }
+    }
+
+    const visibleFaces = CUBE_FACES.map((face) => {
+      const transformedNormal = transformVector3(face.normal, orientation)
+      const depth = face.vertices.reduce(
+        (sum, index) => sum + transformedVertices[index].z,
+        0,
+      ) / face.vertices.length
+      return {
+        ...face,
+        transformedNormal,
+        depth,
+      }
+    })
+      .filter((face) => face.transformedNormal.z > -0.05)
+      .sort((left, right) => left.depth - right.depth)
+
+    const markerNormal = transformVector3({ x: 0, y: 0, z: 1 }, orientation)
+    const markerIsVisible = markerNormal.z > -0.05
+    const projectedVertices = transformedVertices.map(projectPoint)
+
+    const dot = (a: Vector3, b: Vector3) => a.x * b.x + a.y * b.y + a.z * b.z
+
+    const renderOrthographicView = (viewPreset: (typeof CUBE_VIEW_PRESETS)[number]) => {
+      const projectOrtho = (vertex: Vector3): Point => {
+        const scale = 24
+        const px = dot(vertex, viewPreset.right)
+        const py = dot(vertex, viewPreset.up)
+        return {
+          x: CANVAS_CENTER + px * scale,
+          y: CANVAS_CENTER - py * scale,
+        }
+      }
+
+      const visibleFace = CUBE_ALL_FACES.map((face) => ({
+        ...face,
+        visibility: dot(transformVector3(face.normal, orientation), viewPreset.view),
+      }))
+        .sort((a, b) => b.visibility - a.visibility)[0]
+
+      const markerVisible = dot(markerNormal, viewPreset.view) > 0.05
+
+      return (
+        <div className="cube-view-card" key={viewPreset.id}>
+          <p className="cube-view-title">{viewPreset.label}</p>
+          <svg
+            className="cube-view-canvas"
+            viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_SIZE}`}
+            role="img"
+            aria-label={`${title} ${viewPreset.label} view`}
+          >
+            <rect
+              x="1"
+              y="1"
+              width={CANVAS_SIZE - 2}
+              height={CANVAS_SIZE - 2}
+              rx="10"
+              fill="#f8fbff"
+              stroke="#d5e3ef"
+            />
+            <polygon
+              points={pointsToSvg(
+                visibleFace.vertices.map((vertexIndex) =>
+                  projectOrtho(transformedVertices[vertexIndex]),
+                ),
+              )}
+              fill="#7aa2d8"
+              stroke="#2f5f9f"
+            />
+            {markerVisible ? (
+              <polygon
+                points={pointsToSvg(transformedMarker.map(projectOrtho))}
+                fill="#f59d3d"
+                stroke="#b96d14"
+              />
+            ) : null}
+          </svg>
+        </div>
+      )
+    }
+
+    return (
+      <div className="shape-preview">
+        {!hideTitle ? <h4>{title}</h4> : null}
+        <div className="cube-preview-layout">
+          <svg
+            className="shape-canvas cube-main-canvas"
+            viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_SIZE}`}
+            role="img"
+            aria-label={title}
+          >
+            <rect
+              x="1"
+              y="1"
+              width={CANVAS_SIZE - 2}
+              height={CANVAS_SIZE - 2}
+              rx="10"
+              fill="#f8fbff"
+              stroke="#d5e3ef"
+            />
+            {visibleFaces.map((face, index) => (
+              <polygon
+                key={`cube-face-${index}`}
+                points={pointsToSvg(
+                  face.vertices.map((vertexIndex) => projectedVertices[vertexIndex]),
+                )}
+                fill={face.color}
+                stroke="#2f5f9f"
+              />
+            ))}
+            {CUBE_EDGES.map(([startIndex, endIndex], index) => {
+              const start3d = transformedVertices[startIndex]
+              const end3d = transformedVertices[endIndex]
+              const avgDepth = (start3d.z + end3d.z) / 2
+              const start = projectedVertices[startIndex]
+              const end = projectedVertices[endIndex]
+              const isHidden = avgDepth < 0
+
+              return (
+                <line
+                  key={`cube-edge-${index}`}
+                  x1={start.x}
+                  y1={start.y}
+                  x2={end.x}
+                  y2={end.y}
+                  stroke={isHidden ? '#5f7f9f' : '#244f7a'}
+                  strokeOpacity={isHidden ? '0.28' : '0.8'}
+                  strokeWidth={isHidden ? '1.0' : '1.5'}
+                  strokeDasharray={isHidden ? '3 3' : undefined}
+                />
+              )
+            })}
+            {markerIsVisible ? (
+              <polygon
+                points={pointsToSvg(transformedMarker.map(projectPoint))}
+                fill="#f59d3d"
+                stroke="#b96d14"
+              />
+            ) : null}
+          </svg>
+          <div className="cube-views-grid">{CUBE_VIEW_PRESETS.map(renderOrthographicView)}</div>
+        </div>
+      </div>
+    )
+  }
+
   const square = shapeState ? shapeState.square : transformShape(BASE_SQUARE, matrix)
   const triangle = shapeState
     ? shapeState.triangle
@@ -665,7 +1080,8 @@ function App() {
     selectedLevel?.id === 1 ||
     selectedLevel?.id === 2 ||
     selectedLevel?.id === 3 ||
-    selectedLevel?.id === 4
+    selectedLevel?.id === 4 ||
+    selectedLevel?.id === 5
   const guidedBaseShapeState = useMemo(
     () => getBaseShapeStateForLevel(selectedLevel?.id),
     [selectedLevel?.id],
@@ -690,6 +1106,10 @@ function App() {
     }
     return getShapeStateProgressionForSequence(guidedTestSequence, guidedBaseShapeState)
   }, [guidedBaseShapeState, guidedTestSequence])
+  const isLevel5StepView = useMemo(
+    () => guidedStepByStepStates.some((shapeState) => !!shapeState.cubeState),
+    [guidedStepByStepStates],
+  )
   const currentGuidedAction = useMemo(() => {
     if (guidedStage !== 'test' || !guidedTestSequence.length) {
       return null
@@ -1001,16 +1421,19 @@ function App() {
 
               <div className="panel">
                 <h3>Available Actions (click to preview)</h3>
-                <div className="action-links">
+                <div className="action-help-list">
                   {selectedLevel.allowedActions.map((action) => (
-                    <button
-                      key={action}
-                      type="button"
-                      className="action-link"
-                      onClick={() => setGuidedDemoAction(action)}
-                    >
-                      {ACTION_LABELS[action]}
-                    </button>
+                    <div key={action} className="action-help-line">
+                      <button
+                        type="button"
+                        className="action-link"
+                        onClick={() => setGuidedDemoAction(action)}
+                      >
+                        {ACTION_LABELS[action]}
+                      </button>
+                      <span className="action-help-separator">:</span>
+                      <span className="action-help-inline-text">{ACTION_HELP_TEXT[action]}</span>
+                    </div>
                   ))}
                 </div>
                 <div className="action-preview-wrap">
@@ -1167,7 +1590,11 @@ function App() {
 
               <div className="panel">
                 <h3>Step-by-Step Result</h3>
-                <div className="result-steps-grid">
+                <div
+                  className={`result-steps-grid ${
+                    isLevel5StepView ? 'result-steps-grid--linear' : ''
+                  }`}
+                >
                   {guidedStepByStepStates.map((shapeState, index) => (
                     <div className="result-step-card" key={`step-shape-${index}`}>
                       <p className="result-step-title">

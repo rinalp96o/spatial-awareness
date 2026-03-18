@@ -165,6 +165,46 @@ select {
   border-radius: 10px;
 }
 
+.cube-preview-layout {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.cube-main-canvas {
+  max-width: 320px;
+}
+
+.cube-views-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(3, max-content);
+  justify-content: center;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.cube-view-card {
+  border: 1px solid #d7e2ec;
+  border-radius: 10px;
+  padding: 0.2rem;
+  background: #f9fcff;
+  display: grid;
+  gap: 0.2rem;
+  justify-items: center;
+}
+
+.cube-view-title {
+  font-size: 0.75rem;
+  color: #486581;
+  font-weight: 600;
+}
+
+.cube-view-canvas {
+  width: 300px;
+  max-width: none;
+  border-radius: 8px;
+}
+
 .shape-note {
   border: 1px dashed #bcccdc;
   border-radius: 10px;
@@ -183,17 +223,39 @@ select {
   justify-items: start;
 }
 
+.action-help-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.action-help-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
 .action-link {
   border: 0;
   background: transparent;
   color: #2f5f9f;
   padding: 0;
   text-decoration: underline;
+  font-weight: 600;
 }
 
 .action-link:hover {
   color: #234a7a;
   background: transparent;
+}
+
+.action-help-separator {
+  color: #627d98;
+}
+
+.action-help-inline-text {
+  color: #627d98;
+  font-size: 0.88rem;
 }
 
 .current-action {
@@ -219,6 +281,10 @@ select {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.result-steps-grid--linear {
+  grid-template-columns: 1fr;
 }
 
 .result-step-card {

@@ -15,6 +15,91 @@ export const ACTION_LABELS: Record<ActionType, string> = {
   [ACTION_TYPES.gravityTop]: 'Apply gravity up',
   [ACTION_TYPES.gravityLeft]: 'Apply gravity left',
   [ACTION_TYPES.gravityRight]: 'Apply gravity right',
+  [ACTION_TYPES.rotateFront90Clockwise]:
+    'Rotate 90 clockwise while viewing from front',
+  [ACTION_TYPES.rotateFront90AntiClockwise]:
+    'Rotate 90 anti-clockwise while viewing from front',
+  [ACTION_TYPES.rotateFront180]:
+    'Rotate 180 while viewing from front',
+  [ACTION_TYPES.rotateLeft90Clockwise]:
+    'Rotate 90 clockwise while viewing from left',
+  [ACTION_TYPES.rotateLeft90AntiClockwise]:
+    'Rotate 90 anti-clockwise while viewing from left',
+  [ACTION_TYPES.rotateLeft180]:
+    'Rotate 180 while viewing from left',
+  [ACTION_TYPES.rotateRight90Clockwise]:
+    'Rotate 90 clockwise while viewing from right',
+  [ACTION_TYPES.rotateRight90AntiClockwise]:
+    'Rotate 90 anti-clockwise while viewing from right',
+  [ACTION_TYPES.rotateRight180]:
+    'Rotate 180 while viewing from right',
+  [ACTION_TYPES.rotateTop90Clockwise]:
+    'Rotate 90 clockwise while viewing from top',
+  [ACTION_TYPES.rotateTop90AntiClockwise]:
+    'Rotate 90 anti-clockwise while viewing from top',
+  [ACTION_TYPES.rotateTop180]:
+    'Rotate 180 while viewing from top',
+  [ACTION_TYPES.rotateBottom90Clockwise]:
+    'Rotate 90 clockwise while viewing from bottom',
+  [ACTION_TYPES.rotateBottom90AntiClockwise]:
+    'Rotate 90 anti-clockwise while viewing from bottom',
+  [ACTION_TYPES.rotateBottom180]:
+    'Rotate 180 while viewing from bottom',
+}
+
+export const ACTION_HELP_TEXT: Record<ActionType, string> = {
+  [ACTION_TYPES.rotate90Clockwise]:
+    'Rotates the whole shape 90 degrees clockwise around the center.',
+  [ACTION_TYPES.rotate90AntiClockwise]:
+    'Rotates the whole shape 90 degrees anti-clockwise around the center.',
+  [ACTION_TYPES.rotate180]:
+    'Rotates the whole shape by 180 degrees.',
+  [ACTION_TYPES.mirrorHorizontal]:
+    'Flips the whole shape across a horizontal line (top and bottom swap).',
+  [ACTION_TYPES.mirrorVertical]:
+    'Flips the whole shape across a vertical line (left and right swap).',
+  [ACTION_TYPES.mirrorDiagonalBottomLeftToTopRight]:
+    'Reflects the shape across the bottom-left to top-right diagonal.',
+  [ACTION_TYPES.mirrorDiagonalTopLeftToBottomRight]:
+    'Reflects the shape across the top-left to bottom-right diagonal.',
+  [ACTION_TYPES.gravityBottom]:
+    'Applies gravity downward so movable markers (i.e the smaller shapes attatched to the square) slide down along their attached edge.',
+  [ACTION_TYPES.gravityTop]:
+    'Applies gravity upward so movable markers (i.e the smaller shapes attatched to the square) slide up along their attached edge.',
+  [ACTION_TYPES.gravityLeft]:
+    'Applies gravity left so movable markers (i.e the smaller shapes attatched to the square) slide left along their attached edge.',
+  [ACTION_TYPES.gravityRight]:
+    'Applies gravity right so movable markers (i.e the smaller shapes attatched to the square) slide right along their attached edge.',
+  [ACTION_TYPES.rotateFront90Clockwise]:
+    'View the cube from the front, then rotate it 90 degrees clockwise.',
+  [ACTION_TYPES.rotateFront90AntiClockwise]:
+    'View the cube from the front, then rotate it 90 degrees anti-clockwise.',
+  [ACTION_TYPES.rotateFront180]:
+    'View the cube from the front, then rotate it 180 degrees.',
+  [ACTION_TYPES.rotateLeft90Clockwise]:
+    'View the cube from the left side, then rotate it 90 degrees clockwise.',
+  [ACTION_TYPES.rotateLeft90AntiClockwise]:
+    'View the cube from the left side, then rotate it 90 degrees anti-clockwise.',
+  [ACTION_TYPES.rotateLeft180]:
+    'View the cube from the left side, then rotate it 180 degrees.',
+  [ACTION_TYPES.rotateRight90Clockwise]:
+    'View the cube from the right side, then rotate it 90 degrees clockwise.',
+  [ACTION_TYPES.rotateRight90AntiClockwise]:
+    'View the cube from the right side, then rotate it 90 degrees anti-clockwise.',
+  [ACTION_TYPES.rotateRight180]:
+    'View the cube from the right side, then rotate it 180 degrees.',
+  [ACTION_TYPES.rotateTop90Clockwise]:
+    'View the cube from the top, then rotate it 90 degrees clockwise.',
+  [ACTION_TYPES.rotateTop90AntiClockwise]:
+    'View the cube from the top, then rotate it 90 degrees anti-clockwise.',
+  [ACTION_TYPES.rotateTop180]:
+    'View the cube from the top, then rotate it 180 degrees.',
+  [ACTION_TYPES.rotateBottom90Clockwise]:
+    'View the cube from the bottom, then rotate it 90 degrees clockwise.',
+  [ACTION_TYPES.rotateBottom90AntiClockwise]:
+    'View the cube from the bottom, then rotate it 90 degrees anti-clockwise.',
+  [ACTION_TYPES.rotateBottom180]:
+    'View the cube from the bottom, then rotate it 180 degrees.',
 }
 
 export const LEVELS: Level[] = [
@@ -86,6 +171,30 @@ export const LEVELS: Level[] = [
       ACTION_TYPES.gravityRight,
     ],
     actionCount: 8,
+  },
+  {
+    id: 5,
+    title: 'Level 5 (Beta)',
+    difficulty: 'Medium',
+    startImage: '/images/level-5-placeholder.png',
+    allowedActions: [
+      ACTION_TYPES.rotateFront90Clockwise,
+      ACTION_TYPES.rotateFront90AntiClockwise,
+      ACTION_TYPES.rotateFront180,
+      ACTION_TYPES.rotateLeft90Clockwise,
+      ACTION_TYPES.rotateLeft90AntiClockwise,
+      ACTION_TYPES.rotateLeft180,
+      ACTION_TYPES.rotateRight90Clockwise,
+      ACTION_TYPES.rotateRight90AntiClockwise,
+      ACTION_TYPES.rotateRight180,
+      ACTION_TYPES.rotateTop90Clockwise,
+      ACTION_TYPES.rotateTop90AntiClockwise,
+      ACTION_TYPES.rotateTop180,
+      ACTION_TYPES.rotateBottom90Clockwise,
+      ACTION_TYPES.rotateBottom90AntiClockwise,
+      ACTION_TYPES.rotateBottom180,
+    ],
+    actionCount: 5,
   },
 ]
 
