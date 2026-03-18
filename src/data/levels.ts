@@ -45,6 +45,12 @@ export const ACTION_LABELS: Record<ActionType, string> = {
     'Rotate 90 anti-clockwise while viewing from bottom',
   [ACTION_TYPES.rotateBottom180]:
     'Rotate 180 while viewing from bottom',
+  [ACTION_TYPES.gravityFront]: 'Apply gravity front',
+  [ACTION_TYPES.gravityBack]: 'Apply gravity back',
+  [ACTION_TYPES.gravityCubeLeft]: 'Apply gravity cube-left',
+  [ACTION_TYPES.gravityCubeRight]: 'Apply gravity cube-right',
+  [ACTION_TYPES.gravityCubeTop]: 'Apply gravity cube-top',
+  [ACTION_TYPES.gravityCubeBottom]: 'Apply gravity cube-bottom',
 }
 
 export const ACTION_HELP_TEXT: Record<ActionType, string> = {
@@ -100,6 +106,18 @@ export const ACTION_HELP_TEXT: Record<ActionType, string> = {
     'View the cube from the bottom, then rotate it 90 degrees anti-clockwise.',
   [ACTION_TYPES.rotateBottom180]:
     'View the cube from the bottom, then rotate it 180 degrees.',
+  [ACTION_TYPES.gravityFront]:
+    'Applies gravity toward the front of the cube so markers slide within their current face only.',
+  [ACTION_TYPES.gravityBack]:
+    'Applies gravity toward the back of the cube so markers slide within their current face only.',
+  [ACTION_TYPES.gravityCubeLeft]:
+    'Applies gravity toward cube-left so markers slide within their current face only.',
+  [ACTION_TYPES.gravityCubeRight]:
+    'Applies gravity toward cube-right so markers slide within their current face only.',
+  [ACTION_TYPES.gravityCubeTop]:
+    'Applies gravity toward cube-top so markers slide within their current face only.',
+  [ACTION_TYPES.gravityCubeBottom]:
+    'Applies gravity toward cube-bottom so markers slide within their current face only.',
 }
 
 export const LEVELS: Level[] = [
@@ -200,6 +218,37 @@ export const LEVELS: Level[] = [
       ACTION_TYPES.rotateBottom180,
     ],
     actionCount: 5,
+  },
+  {
+    id: 6,
+    title: 'Level 6 (Beta)',
+    difficulty: 'Hard',
+    mode: '3D',
+    startImage: '/images/level-6-placeholder.png',
+    allowedActions: [
+      ACTION_TYPES.rotateFront90Clockwise,
+      ACTION_TYPES.rotateFront90AntiClockwise,
+      ACTION_TYPES.rotateFront180,
+      ACTION_TYPES.rotateLeft90Clockwise,
+      ACTION_TYPES.rotateLeft90AntiClockwise,
+      ACTION_TYPES.rotateLeft180,
+      ACTION_TYPES.rotateRight90Clockwise,
+      ACTION_TYPES.rotateRight90AntiClockwise,
+      ACTION_TYPES.rotateRight180,
+      ACTION_TYPES.rotateTop90Clockwise,
+      ACTION_TYPES.rotateTop90AntiClockwise,
+      ACTION_TYPES.rotateTop180,
+      ACTION_TYPES.rotateBottom90Clockwise,
+      ACTION_TYPES.rotateBottom90AntiClockwise,
+      ACTION_TYPES.rotateBottom180,
+      ACTION_TYPES.gravityFront,
+      ACTION_TYPES.gravityBack,
+      ACTION_TYPES.gravityCubeLeft,
+      ACTION_TYPES.gravityCubeRight,
+      ACTION_TYPES.gravityCubeTop,
+      ACTION_TYPES.gravityCubeBottom,
+    ],
+    actionCount: 7,
   },
 ]
 

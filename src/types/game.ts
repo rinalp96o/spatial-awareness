@@ -25,6 +25,12 @@ export const ACTION_TYPES = {
   rotateBottom90Clockwise: 'rotateBottom90Clockwise',
   rotateBottom90AntiClockwise: 'rotateBottom90AntiClockwise',
   rotateBottom180: 'rotateBottom180',
+  gravityFront: 'gravityFront',
+  gravityBack: 'gravityBack',
+  gravityCubeLeft: 'gravityCubeLeft',
+  gravityCubeRight: 'gravityCubeRight',
+  gravityCubeTop: 'gravityCubeTop',
+  gravityCubeBottom: 'gravityCubeBottom',
 } as const
 
 export type ActionType = (typeof ACTION_TYPES)[keyof typeof ACTION_TYPES]
