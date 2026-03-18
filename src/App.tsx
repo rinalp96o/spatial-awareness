@@ -508,6 +508,68 @@ interface ShapePreviewProps {
   hideTitle?: boolean
 }
 
+type SheetResult = 'success' | 'failure'
+
+const RESULTS_WEBHOOK_URL = (import.meta.env.VITE_RESULTS_WEBHOOK_URL ?? '').trim()
+const SESSION_PROFILE_KEY = 'spatialAwarenessUserProfile'
+
+interface UserProfile {
+  name: string
+  age: string
+  gender: string
+}
+
+const NA_PROFILE: UserProfile = {
+  name: 'N/A',
+  age: 'N/A',
+  gender: 'N/A',
+}
+
+const AGE_OPTIONS: string[] = ['--', ...Array.from({ length: 96 }, (_, index) => `${index + 5}`)]
+
+async function logResultToSheet(
+  level: string,
+  result: SheetResult,
+  profile: UserProfile,
+): Promise<void> {
+  if (!RESULTS_WEBHOOK_URL) {
+    console.warn('Sheet logging skipped: VITE_RESULTS_WEBHOOK_URL is not configured.')
+    return
+  }
+
+  const payload = {
+    level,
+    result,
+    name: profile.name,
+    age: profile.age,
+    gender: profile.gender,
+    timestamp: new Date().toISOString(),
+  }
+
+  try {
+    console.info('Sheet logging: sending payload', payload)
+    const response = await fetch(RESULTS_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        // Use text/plain to avoid browser preflight failures with Apps Script.
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '')
+      throw new Error(`HTTP ${response.status}: ${errorBody}`)
+    }
+
+    const responseText = await response.text().catch(() => '')
+    console.info('Sheet logging: success', responseText || '(no response body)')
+  } catch (error) {
+    // Logging must never block gameplay flow.
+    console.error('Failed to log result to sheet:', error)
+  }
+}
+
 function ShapePreview({
   title,
   matrix = IDENTITY_MATRIX,
@@ -585,6 +647,13 @@ function App() {
     useState<ShapeState>(BASE_SHAPE_STATE)
   const [guidedGuessSubmitted, setGuidedGuessSubmitted] = useState(false)
   const [guidedGuessCorrect, setGuidedGuessCorrect] = useState<boolean | null>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile>(NA_PROFILE)
+  const [profileForm, setProfileForm] = useState<UserProfile>({
+    name: '',
+    age: '--',
+    gender: '--',
+  })
+  const [showProfileModal, setShowProfileModal] = useState(false)
 
   const actionSequence: ActionType[] = useMemo(() => {
     if (!selectedLevel) {
@@ -627,6 +696,54 @@ function App() {
     }
     return guidedTestSequence[guidedActionIndex] ?? null
   }, [guidedActionIndex, guidedStage, guidedTestSequence])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const storedValue = window.sessionStorage.getItem(SESSION_PROFILE_KEY)
+    if (!storedValue) {
+      setShowProfileModal(true)
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(storedValue) as Partial<UserProfile>
+      setUserProfile({
+        name: parsed.name ?? 'N/A',
+        age: parsed.age ?? 'N/A',
+        gender: parsed.gender ?? 'N/A',
+      })
+    } catch {
+      setShowProfileModal(true)
+    }
+  }, [])
+
+  function persistProfile(profile: UserProfile) {
+    setUserProfile(profile)
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile))
+    }
+    setShowProfileModal(false)
+  }
+
+  function handleSubmitProfileForm() {
+    const normalizedAge =
+      !profileForm.age.trim() || profileForm.age.trim() === '--'
+        ? 'N/A'
+        : profileForm.age.trim()
+    const normalizedGender =
+      !profileForm.gender.trim() || profileForm.gender.trim() === '--'
+        ? 'N/A'
+        : profileForm.gender.trim()
+
+    persistProfile({
+      name: profileForm.name.trim() || 'N/A',
+      age: normalizedAge,
+      gender: normalizedGender,
+    })
+  }
 
   function handleSelectLevel(level: Level) {
     setSelectedLevel(level)
@@ -698,6 +815,11 @@ function App() {
     setGuidedGuessCorrect(isCorrect)
     setGuidedGuessSubmitted(true)
     setGuidedStage('result')
+    void logResultToSheet(
+      selectedLevel?.title ?? 'Unknown Level',
+      isCorrect ? 'success' : 'failure',
+      userProfile,
+    )
   }
 
   useEffect(() => {
@@ -757,6 +879,79 @@ function App() {
 
   return (
     <main className="app-shell">
+      {showProfileModal ? (
+        <div className="modal-backdrop" role="presentation">
+          <section
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profile-modal-title"
+          >
+            <h2 id="profile-modal-title">Optional Profile Info</h2>
+            <p className="play-meta">
+              These fields are optional and used only for data analysis.
+            </p>
+
+            <label className="modal-field">
+              <span>Name (optional)</span>
+              <input
+                type="text"
+                value={profileForm.name}
+                onChange={(event) =>
+                  setProfileForm((previous) => ({
+                    ...previous,
+                    name: event.target.value,
+                  }))
+                }
+              />
+            </label>
+
+            <label className="modal-field">
+              <span>Age (optional)</span>
+              <select
+                value={profileForm.age}
+                onChange={(event) =>
+                  setProfileForm((previous) => ({
+                    ...previous,
+                    age: event.target.value,
+                  }))
+                }
+              >
+                {AGE_OPTIONS.map((ageOption) => (
+                  <option key={ageOption} value={ageOption}>
+                    {ageOption}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="modal-field">
+              <span>Gender (optional)</span>
+              <select
+                value={profileForm.gender}
+                onChange={(event) =>
+                  setProfileForm((previous) => ({
+                    ...previous,
+                    gender: event.target.value,
+                  }))
+                }
+              >
+                <option value="--">--</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+
+            <div className="controls-row">
+              <button type="button" onClick={handleSubmitProfileForm}>
+                Save and Continue
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
       {!hideGlobalChrome ? (
         <header className="hero">
           <h1>Spatial Awareness Test</h1>
